@@ -1,0 +1,55 @@
+---
+# Because only raw allowed before a good python is installed
+- name: Check major version
+  raw: "sed 's/\\..*//' /etc/debian_version"
+  register: major_version
+  args:
+    shell: /bin/bash
+  check_mode: no
+  changed_when: no
+  failed_when: no
+
+- name: Verify pager option
+  set_fact:
+    pager_option: "--no-pager"
+  when:
+    - major_version.stdout|int >=9
+    
+# Install python IF NEEDED
+- name: Check if python is installed
+  raw: "dpkg {{ pager_option|default('') }} -l python"
+  args:
+    shell: /bin/bash
+  register: is_python_installed
+  check_mode: no
+  changed_when: no
+  failed_when: no
+
+- name: Update apt repository
+  raw: "apt update"
+  args:
+    shell: /bin/bash
+  when: is_python_installed.rc == 1
+
+- name: Install python for ansible
+  raw: "apt install -y --force-yes -q python"
+  args:
+    shell: /bin/bash
+  when: is_python_installed.rc == 1
+
+# Install python_apt IF NEEDED
+- name: Check if python-apt is installed
+  raw: "dpkg {{ pager_option|default('') }} -l python-apt"
+  args:
+    shell: /bin/bash
+  register: is_python_apt_installed
+  check_mode: no
+  changed_when: no
+  failed_when: no
+
+- name: Install python-apt for ansible
+  raw: "apt install -y --force-yes -q python-apt"
+  args:
+    shell: /bin/bash
+  when: is_python_apt_installed.rc == 1
+...
