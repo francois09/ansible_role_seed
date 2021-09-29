@@ -9,15 +9,27 @@
   changed_when: no
   failed_when: no
 
-- name: Verify pager option
+- name: Set pager option
   set_fact:
     pager_option: "--no-pager"
   when:
     - major_version.stdout|int >=9
     
+- name: Set python-name option
+  set_fact:
+    python_name: "3"
+  when:
+    - major_version.stdout|int >=10
+
+- name: Set ansible python interpreter
+  set_fact:
+    ansible_python_interpreter: "/usr/bin/python3"
+  when:
+    - major_version.stdout|int >=10
+
 # Install python IF NEEDED
 - name: Check if python is installed
-  raw: "dpkg {{ pager_option|default('') }} -l python"
+  raw: "dpkg {{ pager_option|default('') }} -l python{{ python_name|default('') }}"
   args:
     shell: /bin/bash
   register: is_python_installed
@@ -32,14 +44,14 @@
   when: is_python_installed.rc == 1
 
 - name: Install python for ansible
-  raw: "apt install -y --force-yes -q python"
+  raw: "apt install -y --force-yes -q python{{ python_name|default('') }}"
   args:
     shell: /bin/bash
   when: is_python_installed.rc == 1
 
 # Install python_apt IF NEEDED
 - name: Check if python-apt is installed
-  raw: "dpkg {{ pager_option|default('') }} -l python-apt"
+  raw: "dpkg {{ pager_option|default('') }} -l python{{ python_name|default('') }}-apt"
   args:
     shell: /bin/bash
   register: is_python_apt_installed
@@ -48,7 +60,7 @@
   failed_when: no
 
 - name: Install python-apt for ansible
-  raw: "apt install -y --force-yes -q python-apt"
+  raw: "apt install -y --force-yes -q python{{ python_name|default('') }}-apt"
   args:
     shell: /bin/bash
   when: is_python_apt_installed.rc == 1
