@@ -1,31 +1,35 @@
 ---
 # Because only raw allowed before a good python is installed
-- name: Check major version
-  raw: "sed 's/\\..*//' /etc/debian_version"
-  register: major_version
+- name: Check debian version
+  raw: "cat /etc/debian_version"
+  register: debian_version
   args:
     shell: /bin/bash
   check_mode: no
   changed_when: no
   failed_when: no
 
+- name: Get major version
+  set_fact:
+    major_version: "{{ debian_version.stdout.split('.')[0] }}"
+
 - name: Set pager option
   set_fact:
     pager_option: "--no-pager"
   when:
-    - major_version.stdout|int >=9
+    - major_version|int >=9
     
 - name: Set python-name option
   set_fact:
     python_name: "3"
   when:
-    - major_version.stdout|int >=10
+    - major_version|int >=10
 
 - name: Set ansible python interpreter
   set_fact:
     ansible_python_interpreter: "/usr/bin/python3"
   when:
-    - major_version.stdout|int >=10
+    - major_version|int >=10
 
 # Install python IF NEEDED
 - name: Check if python is installed
